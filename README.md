@@ -1,38 +1,70 @@
-# Stable Matching — Proposer Advantage Analysis
+## Что делает сайт
 
-Interactive web app demonstrating the Gale-Shapley algorithm for stable matching in a job-applicant market, with comparative analysis of proposer advantage.
+Сайт демонстрирует **алгоритм Гейла-Шепли** — метод нахождения стабильного паросочетания на двустороннем рынке труда. Это и есть суть вашего проекта по Decision Analysis.
 
-**Live demo:** https://[your-username].github.io/stable-matching/
+**Главная идея:** кто делает предложения — тот выигрывает. Сайт это доказывает математически.
 
-## Project Description
+---
 
-This project analyzes structural differences between:
-- **Applicant-Optimal** matching (applicants propose → best stable matching for applicants)
-- **Employer-Optimal** matching (employers propose → best stable matching for employers)
+## Как пользоваться
 
-### Features
-- Synthetic job posting & resume data generation (skill vectors, cosine similarity)
-- Gale-Shapley deferred acceptance algorithm (both variants)
-- Bipartite graph visualization of matchings
-- Statistical comparison: average rank satisfaction on both sides
-- Stability verification (blocking pair detection)
-- Preference list tables and similarity matrix
+**Раздел 01 — Configuration (Параметры симуляции)**
 
-### Methods
-- **Preference generation:** cosine similarity of skill vectors (binary/continuous, with Gaussian noise)
-- **Algorithm:** Gale-Shapley O(n²)
-- **Metrics:** Average rank (1=best), number of blocking pairs, pairs changed between matchings
+Настройте слайдерами:
+- **Applicants** — сколько кандидатов (4–30)
+- **Employers** — сколько работодателей (4–30)
+- **Skills in Pool** — размер пула навыков для генерации резюме/вакансий
+- **Noise σ** — шум при генерации: чем выше, тем более «случайные» предпочтения
 
-## Deploy to GitHub Pages
+Выберите режим:
+- **Both (Compare)** — запустить оба алгоритма и сравнить ← самое интересное
+- **Applicant-Proposing** — только кандидаты делают предложения
+- **Employer-Proposing** — только работодатели делают предложения
 
-1. Fork or clone this repo
-2. Go to **Settings → Pages → Source → main branch / root**
-3. Visit `https://[your-username].github.io/[repo-name]/`
+Нажмите **▶ Run Simulation**.
 
-No build step required — pure HTML/CSS/JS.
+---
 
-## Authors
-- Vakulich Anastasia (БАСБ251)  
-- Roshchina Nadezhda (БАСБ252)
+**Раздел 02 — Comparative Analysis (Результаты)**
 
-НИУ ВШЭ · Decision Analysis Course · 2025
+Карточки со статистикой:
+- **Avg Applicant Rank (A-Opt)** — средний ранг, который получили кандидаты, когда *они* предлагали. Чем меньше число — тем лучше (1 = первый в списке предпочтений)
+- **Avg Employer Rank (A-Opt)** — средний ранг работодателей в том же сценарии
+- **Avg Applicant Rank (E-Opt)** — средний ранг кандидатов, когда *работодатели* предлагали
+- **Pairs Changed** — сколько пар изменилось между двумя сценариями
+- **Applicant Rank Gain** — величина преимущества предлагающей стороны
+
+Панели A-Optimal vs E-Optimal показывают ранговые бары для каждого кандидата — наглядно видно, кому досталось лучшее или худшее совпадение.
+
+Внизу — проверка стабильности: **✓ Stable (0 blocking pairs)** означает, что в паросочетании нет пары, которая предпочла бы друг друга своим текущим партнёрам.
+
+---
+
+**Раздел 03 — Bipartite Matching Graph (Граф)**
+
+Визуализация паросочетания:
+- Жёлтые точки слева — кандидаты (A01, A02…)
+- Зелёные точки справа — работодатели (E01, E02…)
+- Линии — кто с кем сопоставлен
+- **Розовые линии** — пары, которые *изменились* по сравнению с другим режимом
+
+Кнопки переключают вид: Applicant-Optimal / Employer-Optimal / Difference.
+
+---
+
+**Раздел 04 — Preference Lists & Similarity Matrix**
+
+- **Applicant Prefs** — таблица: каждый кандидат, его навыки и ранжированный список работодателей
+- **Employer Prefs** — то же для работодателей
+- **Similarity Matrix** — матрица cosine similarity между каждым кандидатом и каждым работодателем. Жёлтый = максимальное сходство навыков, это и определяет первые места в списках предпочтений
+
+---
+
+## Что должно быть видно в результатах
+
+Если запустить **Both (Compare)**, вы увидите **proposer advantage** — ключевой вывод проекта:
+
+> Когда предлагают кандидаты → у кандидатов средний ранг **ниже** (лучше), у работодателей **выше** (хуже).  
+> Когда предлагают работодатели → всё наоборот.
+
+Это теоретически гарантировано теоремой Гейла-Шепли, а сайт показывает это на конкретных числах.
