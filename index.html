@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stable Matching — Proposer Advantage Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="noise"></div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-bracket">[</span>
+        <span class="logo-text">STABLE MATCH</span>
+        <span class="logo-bracket">]</span>
+      </div>
+      <nav class="header-nav">
+        <a href="#overview" class="nav-link">Overview</a>
+        <a href="#simulation" class="nav-link">Simulation</a>
+        <a href="#analysis" class="nav-link">Analysis</a>
+        <a href="#graph" class="nav-link">Graph</a>
+      </nav>
+      <div class="header-badge">
+        <span class="badge-dot"></span>
+        Gale-Shapley Algorithm
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero" id="overview">
+      <div class="hero-grid">
+        <div class="hero-content">
+          <div class="hero-tag">Decision Analysis · Stable Matching</div>
+          <h1 class="hero-title">
+            Proposer<br/>
+            <em>Advantage</em><br/>
+            in Job Markets
+          </h1>
+          <p class="hero-desc">
+            Comparative analysis of Applicant-optimal vs Employer-optimal
+            stable matchings using the Gale-Shapley algorithm on simulated
+            job–resume bipartite graphs.
+          </p>
+          <div class="hero-authors">
+            <span>Vakulich Anastasia · БАСБ251</span>
+            <span class="sep">·</span>
+            <span>Roshchina Nadezhda · БАСБ252</span>
+          </div>
+        </div>
+        <div class="hero-diagram" aria-hidden="true">
+          <canvas id="heroCanvas" width="460" height="380"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONFIG + RUN -->
+    <section class="section-config" id="simulation">
+      <div class="section-inner">
+        <div class="section-label">01 — Configuration</div>
+        <h2 class="section-title">Simulation Parameters</h2>
+
+        <div class="config-grid">
+          <div class="config-card">
+            <label class="cfg-label">Applicants <span id="val-applicants" class="cfg-val">10</span></label>
+            <input type="range" id="cfg-applicants" min="4" max="30" value="10" class="slider" />
+          </div>
+          <div class="config-card">
+            <label class="cfg-label">Employers <span id="val-employers" class="cfg-val">10</span></label>
+            <input type="range" id="cfg-employers" min="4" max="30" value="10" class="slider" />
+          </div>
+          <div class="config-card">
+            <label class="cfg-label">Skills in Pool <span id="val-skills" class="cfg-val">12</span></label>
+            <input type="range" id="cfg-skills" min="6" max="24" value="12" class="slider" />
+          </div>
+          <div class="config-card">
+            <label class="cfg-label">Noise σ <span id="val-noise" class="cfg-val">0.1</span></label>
+            <input type="range" id="cfg-noise" min="0" max="50" value="10" class="slider" />
+          </div>
+          <div class="config-card span2">
+            <label class="cfg-label">Matching Mode</label>
+            <div class="mode-tabs">
+              <button class="mode-tab active" data-mode="both">Both (Compare)</button>
+              <button class="mode-tab" data-mode="applicant">Applicant-Proposing</button>
+              <button class="mode-tab" data-mode="employer">Employer-Proposing</button>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-run" class="run-btn">
+          <span class="run-icon">▶</span>
+          Run Simulation
+        </button>
+      </div>
+    </section>
+
+    <!-- RESULTS STATS -->
+    <section class="section-results hidden" id="analysis">
+      <div class="section-inner">
+        <div class="section-label">02 — Results</div>
+        <h2 class="section-title">Comparative Analysis</h2>
+
+        <div class="stats-grid" id="stats-grid">
+          <!-- filled by JS -->
+        </div>
+
+        <div class="comparison-wrap">
+          <div class="comparison-panel" id="panel-applicant">
+            <div class="panel-header">
+              <span class="panel-badge applicant-badge">A-Optimal</span>
+              <span class="panel-title">Applicant-Proposing (DA)</span>
+            </div>
+            <div class="rank-bars" id="bars-applicant"></div>
+          </div>
+          <div class="vs-divider">VS</div>
+          <div class="comparison-panel" id="panel-employer">
+            <div class="panel-header">
+              <span class="panel-badge employer-badge">E-Optimal</span>
+              <span class="panel-title">Employer-Proposing (DA)</span>
+            </div>
+            <div class="rank-bars" id="bars-employer"></div>
+          </div>
+        </div>
+
+        <div class="blocking-info" id="blocking-info"></div>
+      </div>
+    </section>
+
+    <!-- BIPARTITE GRAPH -->
+    <section class="section-graph hidden" id="graph">
+      <div class="section-inner">
+        <div class="section-label">03 — Visualization</div>
+        <h2 class="section-title">Bipartite Matching Graph</h2>
+
+        <div class="graph-controls">
+          <button class="gc-btn active" data-view="applicant">Applicant-Optimal</button>
+          <button class="gc-btn" data-view="employer">Employer-Optimal</button>
+          <button class="gc-btn" data-view="diff">Difference</button>
+        </div>
+
+        <div class="graph-wrap">
+          <canvas id="graphCanvas"></canvas>
+        </div>
+
+        <div class="graph-legend">
+          <span class="leg-item"><span class="leg-dot applicant-dot"></span> Applicant</span>
+          <span class="leg-item"><span class="leg-dot employer-dot"></span> Employer</span>
+          <span class="leg-item"><span class="leg-line match-line"></span> Matched</span>
+          <span class="leg-item"><span class="leg-line diff-line"></span> Changed in other mode</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- PREFERENCE TABLE -->
+    <section class="section-table hidden" id="pref-table-section">
+      <div class="section-inner">
+        <div class="section-label">04 — Data</div>
+        <h2 class="section-title">Preference Lists & Similarity Matrix</h2>
+        <div class="table-tabs">
+          <button class="tt-btn active" data-tab="applicant-prefs">Applicant Prefs</button>
+          <button class="tt-btn" data-tab="employer-prefs">Employer Prefs</button>
+          <button class="tt-btn" data-tab="sim-matrix">Similarity Matrix</button>
+        </div>
+        <div class="table-wrap" id="table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- THEORY -->
+    <section class="section-theory">
+      <div class="section-inner">
+        <div class="section-label">05 — Background</div>
+        <h2 class="section-title">Theoretical Foundation</h2>
+        <div class="theory-grid">
+          <div class="theory-card">
+            <div class="theory-num">01</div>
+            <h3>Gale-Shapley Algorithm</h3>
+            <p>Iterative deferred-acceptance algorithm guaranteeing a stable matching in O(n²) time. Each round proposers make offers; receivers tentatively hold the best and reject the rest.</p>
+          </div>
+          <div class="theory-card">
+            <div class="theory-num">02</div>
+            <h3>Proposer Advantage</h3>
+            <p>The proposing side receives their best possible stable matching. The receiving side receives their worst possible stable matching — this is the core structural asymmetry we measure.</p>
+          </div>
+          <div class="theory-card">
+            <div class="theory-num">03</div>
+            <h3>Cosine Similarity</h3>
+            <p>Preference lists are generated via cosine similarity of skill vectors: sim(a,e) = (a·e)/(|a||e|). Higher similarity = higher rank on the preference list.</p>
+          </div>
+          <div class="theory-card">
+            <div class="theory-num">04</div>
+            <h3>Blocking Pairs</h3>
+            <p>A pair (a,e) blocks a matching if both prefer each other over their current partners. A stable matching has no blocking pairs — verified after each run.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>Stable Matching Analysis · Decision Analysis Project 2025</span>
+      <span>Vakulich A. · Roshchina N. · НИУ ВШЭ</span>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/gale-shapley.js"></script>
+  <script src="js/visualize.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
