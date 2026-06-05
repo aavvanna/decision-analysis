@@ -1,0 +1,10 @@
+# Data and large outputs (kept local; download instructions in README)
+analysis/processed/
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+*.pyc
+docs
+
+# Local Python virtual environment
+.venv/

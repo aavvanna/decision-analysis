@@ -1,159 +1,81 @@
 /**
- * data.js — Synthetic Data Generation
- * Simulates structure of:
- *   - Kaggle vacanciesru dataset (job postings)
- *   - Kaggle Resume Screening Dataset 200k candidates
+ * data.js — Real-data loader
  *
- * Each applicant/employer is described by a skill vector.
- * Preference lists are derived from cosine similarity.
+ * Loads a deterministic 20x20 sample produced by analysis/02_experiments.py
+ * from js/sample_data.json. The sample contains real LinkedIn job-posting
+ * skill profiles and real resume skill profiles (extracted from Kaggle
+ * datasets) along with their cosine-similarity matrix and derived strict
+ * preference lists.
+ *
+ * Exposes the same API as the original synthetic generator so the rest of
+ * the app does not need to change, except that `generate` is now async.
  */
 
 const DATA = (() => {
 
-  // All possible skills drawn from IT/Data domains typical of both datasets
-  const SKILL_POOL = [
-    'Python', 'SQL', 'Machine Learning', 'JavaScript', 'Java',
-    'Data Analysis', 'Excel', 'PowerBI', 'Tableau', 'R',
-    'Deep Learning', 'NLP', 'Docker', 'Kubernetes', 'AWS',
-    'React', 'Node.js', 'PostgreSQL', 'MongoDB', 'Git',
-    'Statistics', 'Pandas', 'TensorFlow', 'Spark', 'Hadoop'
-  ];
+  let cached = null;  // { applicants, employers, simMatrix, applicantPrefs, employerPrefs }
 
-  // Industry labels for employers (from vacanciesru)
-  const INDUSTRIES = [
-    'Fintech', 'E-commerce', 'Healthcare IT', 'EdTech',
-    'Cybersecurity', 'Data Science', 'SaaS', 'Consulting',
-    'Media Tech', 'Logistics Tech'
-  ];
-
-  // Education levels (from resume dataset)
-  const EDUCATION = ['Bachelor', 'Master', 'PhD', 'Bootcamp', 'Self-taught'];
-
-  // Job title templates
-  const JOB_TITLES = [
-    'Data Scientist', 'Backend Developer', 'ML Engineer',
-    'Frontend Developer', 'Data Analyst', 'DevOps Engineer',
-    'Full-Stack Dev', 'BI Developer', 'Software Engineer',
-    'Research Engineer', 'Platform Engineer', 'Analytics Lead'
-  ];
-
-  /**
-   * Generate random skill vector (sparse binary with noise)
-   * @param {number} poolSize - total number of skills
-   * @param {number} density - avg fraction of skills to include
-   * @param {number} noise - σ for continuous noise added
-   * @returns {Float32Array}
-   */
-  function randomSkillVector(poolSize, density = 0.45, noise = 0.1) {
-    const v = new Float32Array(poolSize);
-    for (let i = 0; i < poolSize; i++) {
-      // Bernoulli draw for skill presence + noise
-      v[i] = (Math.random() < density ? (0.6 + Math.random() * 0.4) : 0)
-             + Math.abs(gaussianRandom(0, noise));
-      if (v[i] < 0) v[i] = 0;
+  async function loadSample() {
+    if (cached) return cached;
+    const resp = await fetch('js/sample_data.json');
+    if (!resp.ok) {
+      throw new Error(`Failed to load sample_data.json: ${resp.status}`);
     }
-    return v;
-  }
-
-  /** Box-Muller normal random */
-  function gaussianRandom(mean = 0, std = 1) {
-    let u = 0, v = 0;
-    while (u === 0) u = Math.random();
-    while (v === 0) v = Math.random();
-    return mean + std * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-  }
-
-  /** Cosine similarity between two Float32Arrays */
-  function cosineSim(a, b) {
-    let dot = 0, na = 0, nb = 0;
-    for (let i = 0; i < a.length; i++) {
-      dot += a[i] * b[i];
-      na  += a[i] * a[i];
-      nb  += b[i] * b[i];
-    }
-    const denom = Math.sqrt(na) * Math.sqrt(nb);
-    return denom === 0 ? 0 : dot / denom;
+    cached = await resp.json();
+    return cached;
   }
 
   /**
-   * Generate full simulation data
-   * @param {Object} cfg - { nApplicants, nEmployers, nSkills, noise }
+   * Return a slice of the loaded sample with the requested number of
+   * applicants and employers. Preference lists are filtered to the chosen
+   * subsets (preserving relative order).
+   *
+   * @param {Object} cfg - { nApplicants, nEmployers }  (other fields ignored)
    */
-  function generate(cfg) {
-    const { nApplicants, nEmployers, nSkills, noise } = cfg;
-    const skills = SKILL_POOL.slice(0, nSkills);
+  async function generate(cfg) {
+    const sample = await loadSample();
+    const nA = Math.min(cfg.nApplicants ?? sample.applicants.length, sample.applicants.length);
+    const nE = Math.min(cfg.nEmployers ?? sample.employers.length, sample.employers.length);
 
-    // --- Applicants ---
-    const applicants = Array.from({ length: nApplicants }, (_, i) => {
-      const vec = randomSkillVector(nSkills, 0.4, noise);
-      const topSkills = skills
-        .map((s, idx) => ({ s, v: vec[idx] }))
-        .filter(x => x.v > 0.3)
-        .sort((a, b) => b.v - a.v)
-        .slice(0, 4)
-        .map(x => x.s);
+    const eSet = new Set(Array.from({ length: nE }, (_, i) => i));
+    const aSet = new Set(Array.from({ length: nA }, (_, i) => i));
 
-      return {
-        id: i,
-        name: `A${String(i + 1).padStart(2, '0')}`,
-        label: `Candidate ${i + 1}`,
-        education: EDUCATION[Math.floor(Math.random() * EDUCATION.length)],
-        topSkills,
-        vec,
-      };
-    });
+    const applicants = sample.applicants.slice(0, nA);
+    const employers = sample.employers.slice(0, nE);
 
-    // --- Employers ---
-    const employers = Array.from({ length: nEmployers }, (_, i) => {
-      const vec = randomSkillVector(nSkills, 0.4, noise);
-      const topSkills = skills
-        .map((s, idx) => ({ s, v: vec[idx] }))
-        .filter(x => x.v > 0.3)
-        .sort((a, b) => b.v - a.v)
-        .slice(0, 4)
-        .map(x => x.s);
-
-      return {
-        id: i,
-        name: `E${String(i + 1).padStart(2, '0')}`,
-        label: JOB_TITLES[i % JOB_TITLES.length],
-        industry: INDUSTRIES[i % INDUSTRIES.length],
-        topSkills,
-        vec,
-      };
-    });
-
-    // --- Similarity matrix ---
-    // sim[a][e] = cosine similarity between applicant a and employer e
-    const simMatrix = applicants.map(a =>
-      employers.map(e => parseFloat(cosineSim(a.vec, e.vec).toFixed(4)))
+    // Slice the similarity matrix
+    const simMatrix = applicants.map((_, ai) =>
+      employers.map((_, ei) => sample.simMatrix[ai][ei])
     );
 
-    // --- Preference lists (strict rank = sort by similarity desc) ---
-    // applicantPrefs[a] = ordered list of employer indices (most preferred first)
-    const applicantPrefs = applicants.map((a, ai) =>
-      employers
-        .map((e, ei) => ({ ei, sim: simMatrix[ai][ei] }))
-        .sort((x, y) => y.sim - x.sim)
-        .map(x => x.ei)
+    // Filter preference lists to the active subsets, preserving order.
+    const applicantPrefs = sample.applicantPrefs.slice(0, nA).map(list =>
+      list.filter(ei => eSet.has(ei))
     );
-
-    // employerPrefs[e] = ordered list of applicant indices (most preferred first)
-    const employerPrefs = employers.map((e, ei) =>
-      applicants
-        .map((a, ai) => ({ ai, sim: simMatrix[ai][ei] }))
-        .sort((x, y) => y.sim - x.sim)
-        .map(x => x.ai)
+    const employerPrefs = sample.employerPrefs.slice(0, nE).map(list =>
+      list.filter(ai => aSet.has(ai))
     );
 
     return {
       applicants,
       employers,
-      skills,
+      skills: [],  // kept for API compatibility; vocabulary is implicit in topSkills
       simMatrix,
       applicantPrefs,
       employerPrefs,
     };
+  }
+
+  /** Cosine similarity between two arrays — kept for any external callers. */
+  function cosineSim(a, b) {
+    let dot = 0, na = 0, nb = 0;
+    for (let i = 0; i < a.length; i++) {
+      dot += a[i] * b[i];
+      na += a[i] * a[i];
+      nb += b[i] * b[i];
+    }
+    const denom = Math.sqrt(na) * Math.sqrt(nb);
+    return denom === 0 ? 0 : dot / denom;
   }
 
   return { generate, cosineSim };

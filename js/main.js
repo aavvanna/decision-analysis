@@ -22,8 +22,6 @@
 
   bindSlider('cfg-applicants', 'val-applicants');
   bindSlider('cfg-employers',  'val-employers');
-  bindSlider('cfg-skills',     'val-skills');
-  bindSlider('cfg-noise',      'val-noise', v => (v / 100).toFixed(2));
 
   // ── MODE TABS ────────────────────────────────────────
   let currentMode = 'both';
@@ -80,8 +78,6 @@
     return {
       nApplicants: parseInt(document.getElementById('cfg-applicants').value),
       nEmployers:  parseInt(document.getElementById('cfg-employers').value),
-      nSkills:     parseInt(document.getElementById('cfg-skills').value),
-      noise:       parseFloat(document.getElementById('cfg-noise').value) / 100,
     };
   }
 
@@ -90,10 +86,10 @@
     runBtn.textContent = 'Running…';
 
     // Small delay to let the UI update before heavy computation
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         const cfg = getConfig();
-        const data = DATA.generate(cfg);
+        const data = await DATA.generate(cfg);
         lastData = data;
 
         let resultA = null, resultE = null;
