@@ -2,8 +2,9 @@
 
 A Decision Analysis course project: an empirical study of the **proposer advantage** in the Gale-Shapley deferred acceptance algorithm, applied to a two-sided labor market built from two real Kaggle datasets (job postings + resumes).
 
-**📄 Full report:** [`report.md`](report.md)
-**🌐 Live demo:** [here](https://aavvanna.github.io/decision-analysis/) (or serve the repo locally — see below)
+**Full report:** [`report.md`](report.md)
+
+**Live demo:** [here](https://aavvanna.github.io/decision-analysis/) (or can be served locally — see below)
 
 ---
 
